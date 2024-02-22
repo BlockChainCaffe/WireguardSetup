@@ -36,11 +36,6 @@ sysctl -p
 # Firewall settings (iptables)
 
 
-
-# Enable service
-systemctl enable wg-quick@wg0.service
-systemctl start wg-quick@wg0.service
-
 # Create proper dir
 mkdir /root/Wireguard
 mkdir /root/Wireguard/keys
@@ -52,6 +47,11 @@ chmod 600 /root/Wireguard/keys/*
 
 # Create Server config file
 cat ../server_wg0.conf | \
+    sed "s:%%SERVER_NAME%%:$VPNNAME:" | \
     sed "s:%%PORT%%:$PUBLICPORT:" | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:" \
     > /etc/wireguard/wg0.conf
+
+# Enable service
+systemctl enable wg-quick@wg0.service
+systemctl start wg-quick@wg0.service
