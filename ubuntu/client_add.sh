@@ -48,7 +48,7 @@ rm -f $TMP
 TMP=$(mktemp)
 PK=$(cat /root/Wireguard/clients/$NAME/privatekey)
 pK=$(cat /root/Wireguard/keys/publickey)
-cat ../client_wg0.conf                      | \ 
+cat ../client_wg0.conf                      | \
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:"       | \
     sed "s:%%ENDPOINT%%:$ENDPOINT:"         | \
