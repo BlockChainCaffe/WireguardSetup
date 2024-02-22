@@ -24,43 +24,42 @@ chmod 600 /root/Wireguard/clients/$NAME/*
 K=$(cat /etc/wireguard/wg0.conf | grep Peer | wc -l)
 K=$(( K + 10 ))
 
-if (( $PUBLICURL != "" )); then
+if (( "x$PUBLICURL" != "x" )); then
     PUBLIC=$PUBLICURL
 else
     PUBLIC=$PUBLICIP
 fi
 
 ## Add Peer configuration to Server wg0
-TMP =$(mktemp)
+TMP=$(mktemp)
+pK=$(cat /root/Wireguard/clients/$NAME/publickey)
 cat ../peer_wg0.conf                        | \
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:"    | \
     sed "s:%%K%%:$K:"                       | \
-    sed "s:%%CLIENT_PUBKEY%%:$(cat /root/Wireguard/clients/%NAME/publickey):" | \
+    sed "s:%%CLIENT_PUBKEY%%:$pK:"            \
     > $TMP
-echo >> cat /etc/wireguard/wg0.conf
-cat $TMP >> cat /etc/wireguard/wg0.conf
+echo >> /etc/wireguard/wg0.conf
+cat $TMP >> /etc/wireguard/wg0.conf
 rm -f $TMP
 
 
 ## Create configuration files for client
-TMP =$(mktemp)
+TMP=$(mktemp)
+PK=$(cat /root/Wireguard/clients/$NAME/privatekey)
+pK=$(cat /root/Wireguard/keys/publickey)
 cat ../client_wg0.conf                      |\ 
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:"       | \
     sed "s:%%ENDPOINT%%:$ENDPOINT:"         | \
     sed "s:%%PORT%%:$PUBLICPORT:"           | \
-    sed "s:%%CLIENT_PK%%:$(cat /root/Wireguard/clients/%NAME/privatekey):" | \
+    sed "s:%%CLIENT_PK%%:$PK:"              | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:"    | \
     sed "s:%%K%%:$K:"                       | \
     sed "s:%%DNS%%:$DNS:"                   | \
-    sed "s:%%SERVER_pK%%:$(cat /root/Wireguard/keys/publickey):" | \
+    sed "s:%%SERVER_pK%%:$pK:"                \
     > $TMP
 
-cat $TMP >> /root/Wireguard/clients/$NAME/wg0.conf
-echo "AllowedIPs = $VPNNET_CLASS_C.0/24" >> /root/Wireguard/clients/$NAME/wg0.conf
-
-cat $TMP >> /root/Wireguard/clients/$NAME/wg0A.conf
-echo "AllowedIPs = 0.0.0.0" >> /root/Wireguard/clients/$NAME/wg0A.conf
-
+cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24:"  >> /root/Wireguard/clients/$NAME/wg0.conf
+cat $TMP | sed "s:%%IPS%%:0.0.0.0:" >> /root/Wireguard/clients/$NAME/wg0A.conf
 rm -f $TMP
