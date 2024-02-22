@@ -25,9 +25,9 @@ K=$(cat /etc/wireguard/wg0.conf | grep Peer | wc -l)
 K=$(( K + 10 ))
 
 if (( "x$PUBLICURL" != "x" )); then
-    PUBLIC=$PUBLICURL
+    ENDPOINT=$PUBLICURL
 else
-    PUBLIC=$PUBLICIP
+    ENDPOINT=$PUBLICIP
 fi
 
 ## Add Peer configuration to Server wg0
@@ -48,7 +48,7 @@ rm -f $TMP
 TMP=$(mktemp)
 PK=$(cat /root/Wireguard/clients/$NAME/privatekey)
 pK=$(cat /root/Wireguard/keys/publickey)
-cat ../client_wg0.conf                      |\ 
+cat ../client_wg0.conf                      | \ 
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:"       | \
     sed "s:%%ENDPOINT%%:$ENDPOINT:"         | \
