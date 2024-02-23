@@ -12,12 +12,11 @@ fi
 # Check that the module is in the kernel
 modprobe wireguard
 if [[ $? != 0 ]]; then
-    echo "Wirequadr module is not in the kernel"
+    echo "Wireguard module is not in the kernel"
     exit 1
 fi
 
 # System setup & Requirements
-add-apt-repository ppa:wireguard/wireguard
 apt-get -yqq update && apt-get -yqq upgrade
 apt-get -yqq install wget >/dev/null
 apt-get -yqq install iproute2 >/dev/null
@@ -34,15 +33,12 @@ sysctl -w net.ipv4.conf.all.proxy_arp=1
 sysctl -a > /etc/sysctl.conf
 sysctl -p
 
-# Firewall settings (iptables)
-
-
-# Create proper dir
+# Create dir
 mkdir /root/Wireguard
 mkdir /root/Wireguard/keys
 mkdir /root/Wireguard/clients
 
-# Server private & public ket generation
+# Create server private & public keys
 wg genkey | tee /root/Wireguard/keys/privatekey | wg pubkey > /root/Wireguard/keys/publickey
 chmod 600 /root/Wireguard/keys/*
 
@@ -58,4 +54,5 @@ cat ../server_wg0.conf | \
 systemctl enable wg-quick@wg0.service
 systemctl start wg-quick@wg0.service
 
+# Bring interface up
 wg-quick up wg0

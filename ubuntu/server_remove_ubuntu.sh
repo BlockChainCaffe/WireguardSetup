@@ -7,10 +7,8 @@ systemctl disable --now wg-iptables.service
 rm -f /etc/systemd/system/wg-iptables.service
 
 # Remove configuration files
-rm -rf /etc/wireguard/
+rm -rf /etc/wireguard
 
 # Remove packages
 apt-get remove --purge -y wireguard wireguard-tools >/dev/null
-
-# Remove firewall rules
-# TBD
+apt-get autoremove
