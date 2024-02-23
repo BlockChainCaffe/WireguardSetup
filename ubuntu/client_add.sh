@@ -60,10 +60,17 @@ cat ../client_wg0.conf                      | \
     sed "s:%%SERVER_pK%%:$pK:"                \
     > $TMP
 
-cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24:"  >> /root/Wireguard/clients/$NAME/wg0.conf
-cat $TMP | sed "s:%%IPS%%:0.0.0.0:" >> /root/Wireguard/clients/$NAME/wg0A.conf
+cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24, $DNS:"  > /root/Wireguard/clients/$NAME/wg0.conf
+cat $TMP | sed "s:%%IPS%%:0.0.0.0/0:" > /root/Wireguard/clients/$NAME/wg0A.conf
 rm -f $TMP
 
 cd /root/Wireguard/clients/
-tar -xvf $NAME.tgz $NAME
+tar -zcf $NAME.tgz $NAME
 mv $NAME.tgz $NAME
+
+# Reload wg0 configuration with new client
+wg-quick down wg0
+wg-quick down wg0
+
+echo ""
+echo "Configuration files for client are in /root/Wireguard/clients/$NAME/$NAME.tgz

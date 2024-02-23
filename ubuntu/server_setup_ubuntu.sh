@@ -30,6 +30,7 @@ cp /etc/sysctl.conf /etc/sysctl.conf_BKP
 sysctl -w net.ipv4.ip_forward=1 
 sysctl -w net.ipv6.conf.defaut.forwarding=1
 sysctl -w net.ipv6.conf.all.forwarding=1
+sysctl -w net.ipv4.conf.all.proxy_arp=1
 sysctl -a > /etc/sysctl.conf
 sysctl -p
 
@@ -56,3 +57,5 @@ cat ../server_wg0.conf | \
 # Enable service
 systemctl enable wg-quick@wg0.service
 systemctl start wg-quick@wg0.service
+
+wg-quick up wg0
