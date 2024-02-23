@@ -63,3 +63,7 @@ cat ../client_wg0.conf                      | \
 cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24:"  >> /root/Wireguard/clients/$NAME/wg0.conf
 cat $TMP | sed "s:%%IPS%%:0.0.0.0:" >> /root/Wireguard/clients/$NAME/wg0A.conf
 rm -f $TMP
+
+cd /root/Wireguard/clients/
+tar -xvf $NAME.tgz $NAME
+mv $NAME.tgz $NAME

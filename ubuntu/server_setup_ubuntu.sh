@@ -49,7 +49,8 @@ chmod 600 /root/Wireguard/keys/*
 cat ../server_wg0.conf | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:" | \
     sed "s:%%PORT%%:$PUBLICPORT:" | \
-    sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:" \
+    sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:" | \
+    sed "s:%%DEV%%:$PUBLICETH:" \
     > /etc/wireguard/wg0.conf
 
 # Enable service
