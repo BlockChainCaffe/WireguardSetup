@@ -26,7 +26,6 @@ ConditionPathExists=/opt/blocky
 After=local-fs.target
 
 [Service]
-DynamicUser=yes
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=full
@@ -47,4 +46,8 @@ SyslogIdentifier=blocky
 WantedBy=multi-user.target
 _EOF_
 
+
+## Replace system-resolved
+systemctl disable systemd-resolved.service
+systemctl stop systemd-resolved
 systemctl daemon-reload
