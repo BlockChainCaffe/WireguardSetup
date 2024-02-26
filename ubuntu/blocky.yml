@@ -72,7 +72,7 @@ blocking:
     refreshPeriod: 12h
     downloads:
       timeout: 60s
-      attempts: 15s
+      attempts: 15
       cooldown: 10s
 
 
@@ -82,14 +82,14 @@ caching:
   # duration how long a response must be cached (min value).
   # If <=0, use response's TTL, if >0 use this value, if TTL is smaller
   # Default: 0
-  minTime: -1
+  minTime: -1s
 
   # duration how long a response must be cached (max value).
   # If <0, do not cache responses
   # If 0, use TTL
   # If > 0, use this value, if TTL is greater
   # Default: 0
-  maxTime: 0
+  maxTime: 0s
 
   # Max number of cache entries (responses) to be kept in cache (soft limit). Useful on systems with limited amount of RAM.
   # Default (0): unlimited
@@ -124,50 +124,6 @@ prometheus:
   # url path, optional (default '/metrics')
   path: /metrics
 
-# optional: write query information (question, answer, client, duration etc.) to daily csv file
-##queryLog:
-  # optional one of: mysql, postgresql, csv, csv-client. If empty, log to console
-##  type: mysql
-  # directory (should be mounted as volume in docker) for csv, db connection string for mysql/postgresql
-##  target: db_user:db_password@tcp(db_host_or_ip:3306)/db_name?charset=utf8mb4&parseTime=True&loc=Local
-  #postgresql target: postgres://user:password@db_host_or_ip:5432/db_name
-  # if > 0, deletes log files which are older than ... days
-##  logRetentionDays: 7
-  # optional: Max attempts to create specific query log writer, default: 3
-##  creationAttempts: 1
-  # optional: Time between the creation attempts, default: 2s
-##  creationCooldown: 2s
-  # optional: Which fields should be logged. You can choose one or more from: clientIP, clientName, responseReason, responseAnswer, question, duration. If not defined, it logs all fields
-##  fields:
-##    - clientIP
-##    - duration
-
-# optional: Blocky can synchronize its cache and blocking state between multiple instances through redis.
-##redis:
-  # Server address and port or master name if sentinel is used
-##  address: redismaster
-  # Username if necessary
-##  username: usrname
-  # Password if necessary
-##  password: passwd
-  # Database, default: 0
-##  database: 2
-  # Connection is required for blocky to start. Default: false
-##  required: true
-  # Max connection attempts, default: 3
-##  connectionAttempts: 10
-  # Time between the connection attempts, default: 1s
-##  connectionCooldown: 3s
-  # Sentinal username if necessary
-##  sentinelUsername: usrname
-  # Sentinal password if necessary
-##  sentinelPassword: passwd
-  # List with address and port of sentinel hosts(sentinel is activated if at least one sentinel address is configured)
-##  sentinelAddresses:
-##    - redis-sentinel1:26379
-##    - redis-sentinel2:26379
-##    - redis-sentinel3:26379
-
 # optional: Mininal TLS version that the DoH and DoT server will use
 minTlsServeVersion: 1.3
 # if https port > 0: path to cert and key file for SSL encryption. if not set, self-signed certificate will be generated
@@ -176,39 +132,14 @@ minTlsServeVersion: 1.3
 
 # optional: use these DNS servers to resolve blacklist urls and upstream DNS servers. It is useful if no system DNS resolver is configured, and/or to encrypt the bootstrap queries.
 bootstrapDns:
-##  - tcp+udp:1.1.1.1
-##  - https://1.1.1.1/dns-query
-##  - upstream: https://dns.digitale-gesellschaft.ch/dns-query
-##    ips:
-##      - 185.95.218.42
-
-# optional: drop all queries with following query types. Default: empty
-##filtering:
-##  queryTypes:
-##    - AAAA
-
-# optional: if path defined, use this file for query resolution (A, AAAA and rDNS). Default: empty
-##hostsFile:
-  # optional: Path to hosts file (e.g. /etc/hosts on Linux)
-##  filePath: /etc/hosts
-  # optional: TTL, default: 1h
-##  hostsTTL: 60m
-  # optional: Time between hosts file refresh, default: 1h
-##  refreshPeriod: 30m
-  # optional: Whether loopback hosts addresses (127.0.0.0/8 and ::1) should be filtered or not, default: false
-##  filterLoopback: true
-
-
-# optional: logging configuration
-##log:
-  # optional: Log level (one from debug, info, warn, error). Default: info
-##  level: info
-  # optional: Log format (text or json). Default: text
-##  format: text
-  # optional: log timestamps. Default: true
-##  timestamp: true
-  # optional: obfuscate log output (replace all alphanumeric characters with *) for user sensitive data like request domains or responses to increase privacy. Default: false
-##  privacy: false
+      # Cloudflare
+      - 1.1.1.1
+      # Google
+      - 8.8.8.8
+      - 8.8.4.4
+      # OpenDns
+      - 208.67.222.222
+      - 208.67.220.220
 
 # optional: add EDE error codes to dns response
 ede:

@@ -48,6 +48,7 @@ rm -f $TMP
 TMP=$(mktemp)
 PK=$(cat /root/Wireguard/clients/$NAME/privatekey)
 pK=$(cat /root/Wireguard/keys/publickey)
+# Connon configuration parameters
 cat ../client_wg0.conf                      | \
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:"       | \
@@ -56,12 +57,19 @@ cat ../client_wg0.conf                      | \
     sed "s:%%CLIENT_PK%%:$PK:"              | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:"    | \
     sed "s:%%K%%:$K:"                       | \
-    sed "s:%%DNS%%:$DNS:"                   | \
     sed "s:%%SERVER_pK%%:$pK:"                \
     > $TMP
 
-cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24, $DNS:"  > /root/Wireguard/clients/$NAME/wg0.conf
-cat $TMP | sed "s:%%IPS%%:0.0.0.0/0:" > /root/Wireguard/clients/$NAME/wg0A.conf
+# Configuration wg0: Just connect to lan 
+cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24, $DNS:"  |\
+    sed "s:%%DNS%%:$DNS:"                   | \
+> /root/Wireguard/clients/$NAME/wg0.conf
+
+# Configuraion wg0A: Captive: route all traffic via VPN and resovle DNS with blocky
+cat $TMP | sed "s:%%IPS%%:0.0.0.0/0:"       | \
+    sed "s:%%DNS%%:$VPNNET_CLASS_C.1:"      | \
+> /root/Wireguard/clients/$NAME/wg0A.conf
+
 rm -f $TMP
 
 cd /root/Wireguard/clients/

@@ -51,3 +51,4 @@ _EOF_
 systemctl disable systemd-resolved.service
 systemctl stop systemd-resolved
 systemctl daemon-reload
+systemctl enable blocky.service
