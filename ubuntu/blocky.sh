@@ -1,24 +1,24 @@
 
+## Move configuration file in blocky work directory
+mkdir /opt/blocky
+cp blocky.yml /opt/blocky/blocky_config.yml
+
 
 ## Download latest release and move binary to /opt/blocky
-cd /opt
-mkdir /opt/blocky
 cd /opt/blocky
 TGZ=$(curl -s https://api.github.com/repos/0xERR0R/blocky/releases/latest | grep "browser_download_url" | grep Linux | grep $(uname -m) | cut -d':' -f 2,3 | tr -d '"')
 wget $TGZ
-tar -zxf *.tar.gz
-tar -zxf *.tgz
+tar -zxf *.tar.gz 2>/dev/null
+tar -zxf *.tgz 2>/dev/null
 find . -type f -name blocky -exec mv {} /opt/blocky/. \;
 rm *gz
 
-## Configuration file
-
-
-## Start as a service
 
 # Allow to bind to port < 1024
 setcap cap_net_bind_service=ep /opt/blocky/blocky
 
+
+## Start as a service
 cat > /etc/systemd/system/blocky.service <<_EOF_
 [Unit]
 Description=Blocky is a DNS proxy and ad-blocker
@@ -35,7 +35,7 @@ InaccessiblePaths=/run /var
 
 Type=simple
 WorkingDirectory=/opt/blocky
-ExecStart=/opt/blocky/blocky --config /opt/blocky/config.yml
+ExecStart=/opt/blocky/blocky --config /opt/blocky/blocky_config.yml
 Restart=on-failure
 RestartSec=10
 
