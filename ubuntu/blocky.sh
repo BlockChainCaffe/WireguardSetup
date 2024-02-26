@@ -4,7 +4,7 @@
 cd /opt
 mkdir /opt/blocky
 cd /opt/blocky
-TGZ = $(curl -s https://api.github.com/repos/0xERR0R/blocky/releases/latest | grep "browser_download_url" | grep Linux | grep $(uname -m) | cut -d':' -f 2,3)
+TGZ=$(curl -s https://api.github.com/repos/0xERR0R/blocky/releases/latest | grep "browser_download_url" | grep Linux | grep $(uname -m) | cut -d':' -f 2,3 | tr -d '"')
 wget $TGZ
 tar -zxf *.tar.gz
 tar -zxf *.tgz
@@ -19,15 +19,20 @@ rm *gz
 # Allow to bind to port < 1024
 setcap cap_net_bind_service=ep /opt/blocky/blocky
 
-cat > $/etc/systemd/system/blocky.service <<_EOF_
+cat > /etc/systemd/system/blocky.service <<_EOF_
 [Unit]
 Description=Blocky is a DNS proxy and ad-blocker
 ConditionPathExists=/opt/blocky
 After=local-fs.target
 
 [Service]
-User=nobody
-Group=nobody
+DynamicUser=yes
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectHome=true
+InaccessiblePaths=/run /var
+
 Type=simple
 WorkingDirectory=/opt/blocky
 ExecStart=/opt/blocky/blocky --config /opt/blocky/config.yml
