@@ -2,7 +2,7 @@
 
 
 ## Install requirements
-apt-get install - qyy git make gcc
+apt-get install -qyy git make gcc
 
 
 cd /opt
