@@ -80,7 +80,7 @@ mv $NAME.tgz $NAME
 
 # Reload wg0 configuration with new client
 wg-quick down wg0
-wg-quick down wg0
+wg-quick up wg0
 
 echo ""
 echo "Configuration files for client are in /root/Wireguard/clients/$NAME/$NAME.tgz
