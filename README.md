@@ -1,20 +1,41 @@
 # Wireguard Setup Scripts
 
 Yet another set of scripts to setup a self hosted VPN with
+- **iptables** firewall
 - **blocky** as filtering DNS server
 - **wireguard** as VPN
 - **endlessh** as sshd honeypot
 - **tor** the onion router
 
 ### General assumptions:
-- you have a VPS
-- you can handle a Linux system
-- scripts will be run by root
-- scripts will not do all for you...
+- you have a **VPS** with **Ubuntu** and can ride this bike
+- scripts will be run by **root**
 - these scripts work mostly with **IPV4** internet addresses
+- this is not _"setup the world in 3 minutes"_ crap:
+  - these scripts do some heavy lifting for you
+  - they can be changed to fit your needs
+  - you are the one with a brain and a clear understanding of your needs.
+- scripts **will not** do all the work for you, so:
+  - inspect the scripts
+  - DYOR
+  - check the results
+  - please report back issues or requests
 
 
-## 1) Endlessh setup
+## Installation
+- run the settings.sh script
+- review the output
+- if not ok, edit the script values an run again
+- run any of the other setup scripts, possibly in this order
+
+## IPTables firewall
+IPTables is the low level firewall in Ubuntu. Other firewalls rules management tools like **ufw** might be available but, in the end, they all rely on IPTables, so let's go with that
+
+
+IPTables scripts will be stored in `/opt/iptables`
+
+
+## Endlessh setup
 Endlessh is an SSH tarpit. It basically uses a reverse "slow-loris attack" on bots trying to
 connect to your ssh service. Bots might get stuck for a long time and then give up. It's more
 fun than fail2ban as this will waste attacker time and protect other servers in the meantime
@@ -56,7 +77,7 @@ systemctl status endlessh.service
 journalctl -f | grep endlessh
 ```
 
-## 2) Blocky setup
+## Blocky setup
 Blocky is a DNS proxy and ad-blocker (similar to Pi-Hole) for the local network written in Go with following features:
 - Blocking of DNS queries with external lists (Ad-block, malware)
 - Advanced DNS configuration
@@ -89,7 +110,7 @@ journalctl -f | grep blocky
 ```
 
 
-## 3) Wireguard Setup
+## Wireguard Setup
 WireGuard is an extremely simple yet fast and modern VPN that utilizes state-of-the-art cryptography. It aims to be faster, simpler, leaner, and more useful than IPsec, while avoiding the massive headache. 
 
 Main site:
@@ -161,5 +182,5 @@ wg-quick up <configuration file> # omit '.conf'
 wg-quick down <configuration file> # omit '.conf'
 ```
 
-## 4) TOR setup
+## TOR setup
 (tbd)

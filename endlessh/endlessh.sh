@@ -1,10 +1,17 @@
-## Install endlessh
+# Check this is run by root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run the script as root."
+    exit 1
+fi
 
+## Save starting dir
+IWD=$PWD
 
 ## Install requirements
 apt-get install - qyy git make gcc
 
 
+## Install endlessh
 cd /opt
 git clone https://github.com/skeeto/endlessh.git
 cd endlessh
@@ -12,9 +19,10 @@ make
 make install
 
 ## Configuration file
-cat > /etc/endlessh/config << EOF
+TMP=$(mktemp)
+cat > $TMP << EOF
 # The port on which to listen for new SSH connections.
-Port 2222
+Port %%PORT%%
 
 # The endless banner is sent one line at a time. This is the delay
 # in milliseconds between individual lines.
@@ -41,9 +49,13 @@ LogLevel 1
 #   6 = Use IPv6 only
 BindFamily 0
 EOF
+cat $TMP | sed "s:%%PORT%%:$ENDLESS_PORT:" > /etc/endlessh/config
+rm -f $TMP
 
 ## Service
-cp util/endlessh.service /etc/systemd/system
+setcap 'cap_net_bind_service=+ep' /usr/local/bin/endlessh
+cd $IWD
+cp endlessh.service /etc/systemd/system
 systemctl daemon-reload
 systemctl enable --now endlessh.service
 
@@ -54,6 +66,7 @@ apt-get remove gcc make
 echo "Endlessh installed! \
     Now you can: \
     - change the port of regular ssh from 22 to something random \
+        - keep 2 connections open while doing this, just in case \
     - change the port of endelssh form 2222 to 22 \
-        (follow instructions on endlessh.service file)
+        - modify /etc/endlessh/config Port value
     - monitor connections attempts with journalctl -f"

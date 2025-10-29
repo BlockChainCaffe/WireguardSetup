@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Settings
-source ../settings.sh
+# Settings is loaded?
+if [[ "$VPNNAME" == ""]]; then
+    source ../settings.sh
+fi
 
 # Check this is run by root
 if [ "$EUID" -ne 0 ]; then
@@ -33,7 +35,7 @@ fi
 ## Add Peer configuration to Server wg0
 TMP=$(mktemp)
 pK=$(cat /root/Wireguard/clients/$NAME/publickey)
-cat ../peer_wg0.conf                        | \
+cat ./peer_wg0.conf                        | \
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:"    | \
     sed "s:%%K%%:$K:"                       | \
@@ -49,11 +51,11 @@ TMP=$(mktemp)
 PK=$(cat /root/Wireguard/clients/$NAME/privatekey)
 pK=$(cat /root/Wireguard/keys/publickey)
 # Connon configuration parameters
-cat ../client_wg0.conf                      | \
+cat ./client_wg0.conf                      | \
     sed "s:%%CLIENT_NAME%%:$NAME:"          | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:"       | \
     sed "s:%%ENDPOINT%%:$ENDPOINT:"         | \
-    sed "s:%%PORT%%:$PUBLICPORT:"           | \
+    sed "s:%%PORT%%:$VPNPORT:"           | \
     sed "s:%%CLIENT_PK%%:$PK:"              | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:"    | \
     sed "s:%%K%%:$K:"                       | \

@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Settings
-source ../settings.sh
+# Settings is loaded?
+if [[ "$VPNNAME" == ""]]; then
+    source ../settings.sh
+fi
 
 # Check this is run by root
 if [ "$EUID" -ne 0 ]; then
@@ -43,9 +45,9 @@ wg genkey | tee /root/Wireguard/keys/privatekey | wg pubkey > /root/Wireguard/ke
 chmod 600 /root/Wireguard/keys/*
 
 # Create Server config file
-cat ../server_wg0.conf | \
+cat ./server_wg0.conf | \
     sed "s:%%SERVER_NAME%%:$VPNNAME:" | \
-    sed "s:%%PORT%%:$PUBLICPORT:" | \
+    sed "s:%%PORT%%:$VPNPORT:" | \
     sed "s:%%CLASS_C%%:$VPNNET_CLASS_C:" | \
     sed "s:%%DEV%%:$PUBLICETH:" \
     > /etc/wireguard/wg0.conf

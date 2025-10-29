@@ -1,3 +1,8 @@
+# Check this is run by root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run the script as root."
+    exit 1
+fi
 
 ## Move configuration file in blocky work directory
 mkdir /opt/blocky
@@ -13,10 +18,8 @@ tar -zxf *.tgz 2>/dev/null
 find . -type f -name blocky -exec mv {} /opt/blocky/. \;
 rm *gz
 
-
 # Allow to bind to port < 1024
 setcap cap_net_bind_service=ep /opt/blocky/blocky
-
 
 ## Start as a service
 cat > /etc/systemd/system/blocky.service <<_EOF_
