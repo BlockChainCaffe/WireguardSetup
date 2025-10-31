@@ -128,13 +128,13 @@ create_folders() {
 
 install_wg() {
 
-    if [ -n "$(find $CFG_DIR/keys/ -mindepth 1 -maxdepth 1)" ]; then
-        wt  --title "Previous Installation found" \
-            --msgbox "Private and/or public keys where found in $CFG_DIR. A previous installation might be overwritten or broken.\
-            Please fix this before proceeding. Aborting now" \
-            8 80
-        exit 1
-    fi
+    # if [ -n "$(find $CFG_DIR/keys/ -mindepth 1 -maxdepth 1)" ]; then
+    #     wt  --title "Previous Installation found" \
+    #         --msgbox "Private and/or public keys where found in $CFG_DIR. A previous installation might be overwritten or broken.\
+    #         Please fix this before proceeding. Aborting now" \
+    #         8 80
+    #     exit 1
+    # fi
 
     {   
         # System setup & Requirements
@@ -183,8 +183,10 @@ install_wg() {
         # echo "Creating Wireguard server keys"
         # echo "XXX"
         # Create server private & public keys
-        wg genkey | tee $CFG_DIR/keys/privatekey | wg pubkey > $CFG_DIR/keys/publickey
-        chmod 600 $CFG_DIR/keys/*
+        if [ -z "$(find $CFG_DIR/keys/ -mindepth 1 -maxdepth 1)" ]; then
+            wg genkey | tee $CFG_DIR/keys/privatekey | wg pubkey > $CFG_DIR/keys/publickey
+            chmod 600 $CFG_DIR/keys/*
+        fi
 
         echo 100
         echo "XXX"
@@ -248,7 +250,7 @@ create_settings() {
     # Get server Public IPV4 address
     PUBLICIP=$(get_external_ip)
     PUBLICIP_COUNT=$(echo $PUBLICIP | wc -w)
-    if [[ $PUBLICIP == 1 ]]; then
+    if [[ $PUBLICIP_COUNT == 1 ]]; then
         wt  --title "Cannot get your public IP address." \
             --msgbox "Your public IP address appears to be different according to different services ($PUBLICIP). Cannot continue" \
             8 80
