@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 
-:'
+BANNER='
 ###############################################################################
 
             ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓██████████████▓▒░  
@@ -18,6 +18,31 @@ set -x
 ###############################################################################
 '
 
+DISCLAIMER='
+VPN Usage Disclaimer
+
+This VPN script is provided "as is" without any warranties or guarantees. 
+By using this service, you acknowledge and agree that:
+
+1. You are solely responsible for your activities while connected to this VPN.
+
+2. The VPN script provider assumes no liability for any illegal activities, 
+   misuse, or any damages arising from your use of this service.
+
+3. You agree to comply with all applicable laws and regulations in your 
+   jurisdiction while using this VPN.
+
+4. The provider is not responsible for any data loss, security breaches, 
+   service interruptions, or any direct or indirect damages resulting from 
+   VPN usage.
+
+5. You use this service at your own risk. The provider makes no guarantees 
+   regarding privacy, security, speed, or availability.
+
+6. The provider reserves the right to terminate access at any time without 
+   notice.
+
+By using this VPN, you accept these terms in full.'
 
 ###############################################################################
 # Globals
@@ -396,25 +421,63 @@ EOF
 
     rm -f $TMP
 
-    ## Create conf packet
-    cd $CFG_DIR/clients/
-    tar -zcf $CFG_DIR/clients/$CLIENT_NAME.tgz -C $CFG_DIR/clients/ $CLIENT_NAME
-    # rm -Rf $CFG_DIR/clients/$CLIENT_NAME
-
     # Reload wg0 configuration with new client
     wg-quick down wg0
     wg-quick up wg0
 
     # Display QRCodes
-    TMP=$(mktemp)
-    qrencode -t ansiutf8 < $CFG_DIR/clients/$CLIENT_NAME/wg0.conf > $TMP
+    qrencode -t utf8i < $CFG_DIR/clients/$CLIENT_NAME/wg0.conf > $CFG_DIR/clients/$CLIENT_NAME/wg0_qr.txt
     wt --title "Client configuration QRCode (1/2)" \
-        --textbox $TMP 40 80 --scrolltext
-    qrencode -t ansiutf8 < $CFG_DIR/clients/$CLIENT_NAME/wg0A.conf > $TMP
+        --textbox $CFG_DIR/clients/$CLIENT_NAME/wg0_qr.txt 40 80 --scrolltext
+    qrencode -t utf8i < $CFG_DIR/clients/$CLIENT_NAME/wg0A.conf > $CFG_DIR/clients/$CLIENT_NAME/wg0A_qr.txt
     wt --title "Client configuration QRCode (2/2)" \
-        --textbox $TMP 40 80 --scrolltext
+        --textbox $CFG_DIR/clients/$CLIENT_NAME/wg0A_qr.txt 40 80 --scrolltext
 
-    rm -Rf $TMP
+    cat << EOF > $CFG_DIR/clients/$CLIENT_NAME/install.sh
+apt-get -yqq install wireguard wireguard-tools
+apt-get -yqq install openresolv
+mkdir /etc/wireguard
+cp *.conf /etc/wireguard
+EOF
+
+
+cat << EOF > $CFG_DIR/clients/$CLIENT_NAME/README.txt
+
+$BANNER
+
+This folder contains your configuration files for the "$VPNNAME" VPN 
+and contains: 
+
+ - README.txt : this file
+ - install.sh : an install script for Debian based clients
+ - privatekey : private encription key. Put somewhere safe
+ - publickey  : public key
+ - wg*.*      : configuration files
+
+About the configuration files:
+You can access the "$VPNNAME" VPN in two modes: split and full tunnel
+
+
+Split tunnel: 
+Only traffic to services inside the VPN goes through the VPN. 
+Everything else goes directly through your normal internet connection.
+Faster, generally used by "road warriors". Not for privacy
+
+ - wg0.conf: import this configuration file in your client, or
+ - wg0_qr.txt: scan this qrcode with your phone
+
+Full tunnel: 
+All internet traffic is routed through the VPN. This is used for 
+complete privacy. 
+
+ - wg0A.conf: import this configuration file in your client, or
+ - wg0A_qr.txt: scan this qrcode with your phone
+
+$DISCLAIMER
+
+EOF
+    ## Create conf packet
+    tar -zcf $CFG_DIR/clients/$CLIENT_NAME.tgz -C $CFG_DIR/clients/ $CLIENT_NAME
 
     wt  --title "Configuration done" \
         --msgbox "Configuration files for client are in $CFG_DIR/clients/$CLIENT_NAME.tgz." \
@@ -628,6 +691,7 @@ if [[ $? != 0 ]]; then
     exit 1
 fi
 
+wt --title "VPN Disclaimer" --msgbox "$DISCLAIMER" --scrolltext  25 70
 
 # Check if previoulsy run/configured
 if [ ! -f "$CFG_DIR/settings.conf" ]; then
