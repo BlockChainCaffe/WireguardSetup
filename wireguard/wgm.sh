@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 :'
 ###############################################################################
@@ -67,20 +68,7 @@ check_whiptail() {
 
         if [[ "$choice" =~ ^[Yy]$ ]]; then
             echo "Installing whiptail..."
-        
-            # Detect package manager
-            if command -v apt-get &> /dev/null; then
-                sudo apt-get update -y && sudo apt-get install -y whiptail
-            elif command -v dnf &> /dev/null; then
-                sudo dnf install -y newt
-            elif command -v yum &> /dev/null; then
-                sudo yum install -y newt
-            elif command -v pacman &> /dev/null; then
-                sudo pacman -S --noconfirm libnewt
-            else
-                echo "Unsupported package manager. Please install whiptail manually."
-                exit 1
-            fi
+            sudo apt-get update -y && sudo apt-get install -y whiptail
 
             # Verify installation success
             if ! command -v whiptail &> /dev/null; then
@@ -111,7 +99,12 @@ get_external_ip() {
 
     # Wait for all background jobs to finish
     wait
-    echo $(cat "$tmpfile" | sort | uniq | grep -v '^[[:space:]]*$' )
+    PUBLICIP=$(cat "$tmpfile" | sort | uniq | grep -v '^[[:space:]]*$' )
+    PUBLICIP=$(wt  --title "Your external IP"\
+        --inputbox "Please check here and insert your external IP address"\
+        8 80\
+        $PUBLICIP)
+    # echo $PUBLICIP
 }
 
 
@@ -126,42 +119,39 @@ create_folders() {
 ###############################################################################
 # Installation
 
-install_wg() {
-
-    # if [ -n "$(find $CFG_DIR/keys/ -mindepth 1 -maxdepth 1)" ]; then
-    #     wt  --title "Previous Installation found" \
-    #         --msgbox "Private and/or public keys where found in $CFG_DIR. A previous installation might be overwritten or broken.\
-    #         Please fix this before proceeding. Aborting now" \
-    #         8 80
-    #     exit 1
-    # fi
-
-    {   
-        # System setup & Requirements
+update_system() {
+    YN=$(wt --title "Update System?"\
+            --yesno "Do you want to update the system before continuing? (this might take a while...)" \
+            8 80
+        )
+    if [[ "$?" == 0 ]]; then
+        {
         echo 5
-        # echo "XXX"
-        # echo "Updating Syste..."
-        # echo "XXX"
+        # System setup & Requirements
         apt-get -yqq update >> /dev/null 2>&1 
         apt-get -yqq upgrade >> /dev/null 2>&1 
+        } | whiptail --gauge "System update in progress" 8 70 0
+    fi
+}
 
+install_wg() {
+
+    # Run apt-get update?
+    update_system
+
+    {   
         echo 35
-        # echo "XXX"
-        # echo "Installing addidional software..."
-        # echo "XXX"
+        # Install requirements
         apt-get -yqq install wget >/dev/null
         apt-get -yqq install iproute2 >/dev/null
+        apt-get -yqq install openresolv                 # TBD add to client script
 
         echo 50
-        # echo "XXX"
-        # echo "Installing Wireguard..."
-        # echo "XXX"
+        # Install wireguard
         apt-get -yqq install wireguard wireguard-tools >> /dev/null 2>&1 
  
         echo 70
-        # echo "XXX"
-        # echo "Tuning Kernel..."
-        # echo "XXX"
+        # Kernel tweaks
         cp /etc/sysctl.conf /etc/sysctl.conf_BKP
         sysctl -w net.ipv4.ip_forward=1 
         sysctl -w net.ipv6.conf.defaut.forwarding=1
@@ -171,17 +161,10 @@ install_wg() {
         sysctl -p
 
         echo 80
-        # echo "XXX"
-        # echo "Creating /root folders..."
-        # echo "XXX"
-        mkdir -p $CFG_DIR >> /dev/null 2>&1 
-        mkdir -p $CFG_DIR/keys  >> /dev/null 2>&1
-        mkdir -p $CFG_DIR/clients >> /dev/null 2>&1 
+        # Config direcory
+        create_folders
 
         echo 90
-        # echo "XXX"
-        # echo "Creating Wireguard server keys"
-        # echo "XXX"
         # Create server private & public keys
         if [ -z "$(find $CFG_DIR/keys/ -mindepth 1 -maxdepth 1)" ]; then
             wg genkey | tee $CFG_DIR/keys/privatekey | wg pubkey > $CFG_DIR/keys/publickey
@@ -189,9 +172,7 @@ install_wg() {
         fi
 
         echo 100
-        echo "XXX"
-        echo "Done!"
-        echo "XXX"
+        #Done
     } | whiptail --gauge "Installation Progress" 8 70 0
 }
 
@@ -247,25 +228,16 @@ EOF
 
 ## Creates configuration file
 create_settings() {
+    source $CFG_DIR/settings.conf
     # Get server Public IPV4 address
-    PUBLICIP=$(get_external_ip)
-    PUBLICIP_COUNT=$(echo $PUBLICIP | wc -w)
-    if [[ $PUBLICIP_COUNT == 1 ]]; then
-        wt  --title "Cannot get your public IP address." \
-            --msgbox "Your public IP address appears to be different according to different services ($PUBLICIP). Cannot continue" \
-            8 80
-        exit 1
-    fi
+    get_external_ip
 
     ## Get default gateway interface
     PUBLICETH=$(ip route | grep default | sed "s/^.*dev //" | sed "s/ .*$//")
-    PUBLICETH_COUNT=$(echo $PUBLICETH | wc -w)
-    if [[ $PUBLICETH_COUNT != 1 ]]; then
-        wt  --title "Cannot get your public Network interface" \
-            --msgbox "Your server has multiple default gateways ($PUBLICETH). Cannot continue" \
-            8 80
-        exit 1
-    fi
+    PUBLICETH=$(wt  --title "Your external NIC"\
+        --inputbox "Please check here and insert your external facing NIC"\
+        8 80\
+        $PUBLICETH)
 
     ## Get Public DNS name
     YN=$(wt --title "Public DNS name"\
@@ -279,7 +251,7 @@ create_settings() {
         RESOLVE=$(dig +short $PUBLICURL)
         if [[ "$RESOLVE" != "$PUBLICURL" ]]; then
             wt  --title "DNS/IP mismatch" \
-                --msgbox "Your server has multiple default gateways ($PUBLICETH). Cannot continue" \
+                --msgbox "The DNS name you inserted does not resolve to your IP. Cannot continue" \
                 8 80
             exit 1
         fi
@@ -289,9 +261,9 @@ create_settings() {
 
     ## Get DNS Server to use
     DNS=$(wt --title "Pick a DNS Server" \
-            --radiolist "Choose user's DNS" 20 78 4 \
+            --radiolist "Choose user's DNS" 20 78 8 \
             "208.67.222.222, 208.67.220.220" "OpenDNS" ON \
-            "8.8.8.8, 8.8.4.4"                "Google" OFF \
+            "8.8.8.8, 8.8.4.4"               "Google" OFF \
             "1.1.1.1, 1.0.0.1"               "CloudFlare" OFF \
             "9.9.9.9, 149.112.112.112"       "Quad9" OFF \
             "94.140.14.14, 94.140.15.15"     "AdGuard" OFF)
@@ -322,7 +294,7 @@ create_settings() {
     echo "PUBLICIP=$PUBLICIP" >> $CFG_FILE
     echo "PUBLICETH=$PUBLICETH" >> $CFG_FILE
     echo "PUBLICURL=$PUBLICURL" >> $CFG_FILE
-    echo "DNS=$DNS" >> $CFG_FILE
+    echo "DNS='$DNS'" >> $CFG_FILE
     echo "VPNNAME=$VPNNAME" >> $CFG_FILE
     echo "VPNNET_CLASS_C=$VPNNET_CLASS_C" >> $CFG_FILE
     echo "VPNPORT=$VPNPORT" >> $CFG_FILE
@@ -386,7 +358,7 @@ PublicKey = $pK
 PersistentKeepalive = 25
 EOF
     ## Need to stop WG to change config file
-    wg-quick down 2g0
+    wg-quick down wg0
     echo >> /etc/wireguard/wg0.conf
     cat $TMP >> /etc/wireguard/wg0.conf
     rm -f $TMP
@@ -400,7 +372,7 @@ EOF
 [Interface]
 # Name = $CLIENT_NAME
 PrivateKey = $PK
-Address = $CLASS_C.$K/24
+Address = $VPNNET_CLASS_C.$K/24
 DNS = %%DNS%%
 
 [Peer]
@@ -410,9 +382,8 @@ PublicKey = $pK
 AllowedIPs = %%IPS%%
 PersistentKeepalive = 30
 EOF
-
     # Configuration wg0: Just connect to lan 
-    cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24, $DNS:"  |\
+    cat $TMP | sed "s:%%IPS%%:$VPNNET_CLASS_C.0/24:"  |\
         sed "s:%%DNS%%:$DNS:" \
     > $CFG_DIR/clients/$CLIENT_NAME/wg0.conf
 
@@ -426,7 +397,7 @@ EOF
 
     ## Create conf packet
     cd $CFG_DIR/clients/
-    tar -zcf $CFG_DIR/clients/$CLIENT_NAME.tgz $CFG_DIR/clients/$CLIENT_NAME
+    tar -zcf $CFG_DIR/clients/$CLIENT_NAME.tgz -C $CFG_DIR/clients/ $CLIENT_NAME
     rm -Rf $CFG_DIR/clients/$CLIENT_NAME
 
     # Reload wg0 configuration with new client
@@ -436,7 +407,6 @@ EOF
     wt  --title "Configuration done" \
         --msgbox "Configuration files for client are in $CFG_DIR/clients/$CLIENT_NAME.tgz." \
         8 80
-
 }
 
 
@@ -507,9 +477,7 @@ listusers() {
     wt --title "Your Clients"\
         --scrolltext\
         --msgbox $"$LIST" 28 80
-
 }
-
 
 
 remove_1_user() {
@@ -553,6 +521,7 @@ removeusers() {
 main_menu() {
     while true; do
         source $CFG_DIR/settings.conf
+        echo $DNS
         CHOICE=$(wt --title "WGM Main Menu" --menu "Choose an option:" 20 58 14 \
             "Settings" "Display the current settings" \
             "Configure" "Change/Update the configuration settings" \
