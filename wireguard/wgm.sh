@@ -170,7 +170,7 @@ install_wg() {
         apt-get -yqq install wget >/dev/null
         apt-get -yqq install iproute2 >/dev/null
         apt-get -yqq install openresolv                 # TBD add to client script
-        apt-get -yqq apt install qrencode
+        apt-get -yqq install qrencode
 
         echo 50
         # Install wireguard
@@ -425,13 +425,20 @@ EOF
     wg-quick down wg0
     wg-quick up wg0
 
+
     # Display QRCodes
+    clear
     qrencode -t utf8i < $CFG_DIR/clients/$CLIENT_NAME/wg0.conf > $CFG_DIR/clients/$CLIENT_NAME/wg0_qr.txt
-    wt --title "Client configuration QRCode (1/2)" \
-        --textbox $CFG_DIR/clients/$CLIENT_NAME/wg0_qr.txt 40 80 --scrolltext
+    echo "Scan this QR code with WireGuard app for SPLIT tunnel"
+    cat $CFG_DIR/clients/$CLIENT_NAME/wg0_qr.txt
+    read -p "Press Enter to continue..."
+    
+    clear
     qrencode -t utf8i < $CFG_DIR/clients/$CLIENT_NAME/wg0A.conf > $CFG_DIR/clients/$CLIENT_NAME/wg0A_qr.txt
-    wt --title "Client configuration QRCode (2/2)" \
-        --textbox $CFG_DIR/clients/$CLIENT_NAME/wg0A_qr.txt 40 80 --scrolltext
+    echo "Scan this QR code with WireqGuard app for FULL tunnel"
+    cat $CFG_DIR/clients/$CLIENT_NAME/wg0A_qr.txt
+    read -p "Press Enter to continue..."
+
 
     cat << EOF > $CFG_DIR/clients/$CLIENT_NAME/install.sh
 apt-get -yqq install wireguard wireguard-tools
@@ -546,9 +553,7 @@ show_updown() {
 
 
 listusers() {
-    LIST=$(find $CFG_DIR/clients/ -name "*.tgz" -type f | xargs basename)
-    LIST=$(echo $LIST | sed "s/\.tgz//")
-
+    LIST=$(find $CFG_DIR/clients/ -mindepth 1 -maxdepth 1 -type d  | sed "s:^.*/::")
     wt --title "Your Clients"\
         --scrolltext\
         --msgbox $"$LIST" 28 80
@@ -567,9 +572,7 @@ remove_1_user() {
 
 
 removeusers() {
-    LIST=$(find $CFG_DIR/clients/ -name "*.tgz" -type f | xargs basename)
-    LIST=$(echo $LIST | sed "s/\.tgz//")
-
+    LIST=$(find $CFG_DIR/clients/ -mindepth 1 -maxdepth 1 -type d  | sed "s:^.*/::")
     CHECKLIST_ARGS=()
     for user in "${LIST[@]}"; do
         CHECKLIST_ARGS+=("$user" "" OFF)  # word, description, default status
@@ -584,7 +587,7 @@ removeusers() {
         user=$(echo $user | tr -d "\'\"")
         echo $user
         ##  Extract tgz archive
-        rm -f $CFG_DIR/clients/$user.tgz
+        rm -Rf $CFG_DIR/clients/$user.tgz $CFG_DIR/clients/$user
         ## Remove the config files
         remove_1_user $user
     done
