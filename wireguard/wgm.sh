@@ -145,6 +145,7 @@ install_wg() {
         apt-get -yqq install wget >/dev/null
         apt-get -yqq install iproute2 >/dev/null
         apt-get -yqq install openresolv                 # TBD add to client script
+        apt-get -yqq apt install qrencode
 
         echo 50
         # Install wireguard
@@ -398,11 +399,22 @@ EOF
     ## Create conf packet
     cd $CFG_DIR/clients/
     tar -zcf $CFG_DIR/clients/$CLIENT_NAME.tgz -C $CFG_DIR/clients/ $CLIENT_NAME
-    rm -Rf $CFG_DIR/clients/$CLIENT_NAME
+    # rm -Rf $CFG_DIR/clients/$CLIENT_NAME
 
     # Reload wg0 configuration with new client
     wg-quick down wg0
     wg-quick up wg0
+
+    # Display QRCodes
+    TMP=$(mktemp)
+    qrencode -t ansiutf8 < $CFG_DIR/clients/$CLIENT_NAME/wg0.conf > $TMP
+    wt --title "Client configuration QRCode (1/2)" \
+        --textbox $TMP 40 80 --scrolltext
+    qrencode -t ansiutf8 < $CFG_DIR/clients/$CLIENT_NAME/wg0A.conf > $TMP
+    wt --title "Client configuration QRCode (2/2)" \
+        --textbox $TMP 40 80 --scrolltext
+
+    rm -Rf $TMP
 
     wt  --title "Configuration done" \
         --msgbox "Configuration files for client are in $CFG_DIR/clients/$CLIENT_NAME.tgz." \
