@@ -383,8 +383,6 @@ AllowedIPs = $VPNNET_CLASS_C.$K/32
 PublicKey = $pK
 PersistentKeepalive = 25
 EOF
-    ## Need to stop WG to change config file
-    wg-quick down wg0
     echo >> /etc/wireguard/wg0.conf
     cat $TMP >> /etc/wireguard/wg0.conf
     rm -f $TMP
@@ -573,6 +571,7 @@ remove_1_user() {
 
 removeusers() {
     LIST=$(find $CFG_DIR/clients/ -mindepth 1 -maxdepth 1 -type d  | sed "s:^.*/::")
+    LIST=($LIST)
     CHECKLIST_ARGS=()
     for user in "${LIST[@]}"; do
         CHECKLIST_ARGS+=("$user" "" OFF)  # word, description, default status
@@ -591,6 +590,8 @@ removeusers() {
         ## Remove the config files
         remove_1_user $user
     done
+    wg-quick down w0
+    wg-quick up w0
 }
 
 ###############################################################################
